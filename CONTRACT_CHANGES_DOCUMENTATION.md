@@ -11,6 +11,7 @@ Based on commit history analysis, the following major changes have been implemen
 3. **Enhanced Escrow contract** with NFT transfer integration
 4. **Added new interface** `IAstraNFTCollectible.sol`
 5. **Commented out batch listing functions** (temporarily disabled)
+6. **Updated Contract Addresses** ASTRA_NFT_COLLECTIBLE_CONTRACT_ADDRESS=0x26163113B34bF2e8bE685B2DBBD8a1bA22ad5f54 | ESCROW_CONTRACT_ADDRESS=0xb4a704f97CD22376AD9E867fcdeE6FB7C53FF42E
 
 ---
 
