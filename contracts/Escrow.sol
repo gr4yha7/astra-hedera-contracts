@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 // Hedera Token Service Contracts
 import {IHederaTokenService} from "@hashgraph/smart-contracts/contracts/system-contracts/hedera-token-service/IHederaTokenService.sol";
 import {HederaResponseCodes} from "@hashgraph/smart-contracts/contracts/system-contracts/HederaResponseCodes.sol";
+import {IAstraNFTCollectible} from "./IAstraNFTCollectible.sol";
 
 /**
  * @title Escrow Contract for Hedera
@@ -33,9 +34,9 @@ contract Escrow is Ownable, ReentrancyGuard {
         address shopper;
         address maker;
         address creator; // Optional creator address
-        address treasury;
         address agent;
         uint256 amount;
+        uint256 nftTokenId;
         uint8 milestonesCompleted;
         bytes status;
         uint256 remainingBalance;
@@ -46,16 +47,19 @@ contract Escrow is Ownable, ReentrancyGuard {
     mapping(uint256 => EscrowData) public escrows;
     mapping(address => mapping(address => uint256)) public deposits; // shopper => agent => amount
     mapping(address => uint256[]) public shopperEscrows; // shopper => escrow ids
+    EscrowData[] public allEscrows;
     uint256 private nextEscrowId;
     IHederaTokenService public hederaTokenService;
+    address public treasuryAddress;
     address public usdcAddress;
-
+    address public astraNFTCollectibleAddress;
     // Events
     event FundsDeposited(address indexed shopper, address indexed agent, uint256 amount);
-    event EscrowCreated(uint256 indexed escrowId, address shopper, address maker, address treasury, uint256 amount);
+    event EscrowCreated(uint256 indexed escrowId, address shopper, address maker, address treasury, uint256 amount, uint256 nftTokenId);
     event MilestoneCompleted(uint256 indexed escrowId, uint8 milestoneNumber, bytes status);
     event PaymentReleased(uint256 indexed escrowId, address recipient, uint256 amount);
-
+    event AstraNFTCollectibleAddressUpdated(address indexed astraNFTCollectibleAddress);
+    event TreasuryUpdated(address indexed treasuryAddress);
     // Errors
     error InvalidAmount();
     error InvalidAddress();
@@ -70,11 +74,24 @@ contract Escrow is Ownable, ReentrancyGuard {
      * @dev Constructor sets the USDC token address
      * @param _hederaTokenService The Hedera token service contract address
      * @param _usdcAddress The USDC token contract address
+     * @param _astraNFTCollectibleAddress The Astra NFT Collectible contract address
      */
-    constructor(address _hederaTokenService, address _usdcAddress) {
-        if (_hederaTokenService == address(0) || _usdcAddress == address(0)) revert InvalidAddress();
+    constructor(
+        address _treasuryAddress,
+        address _hederaTokenService,
+        address _usdcAddress,
+        address _astraNFTCollectibleAddress
+    ) {
+        if (
+            _treasuryAddress == address(0) ||
+            _hederaTokenService == address(0) ||
+            _usdcAddress == address(0) ||
+            _astraNFTCollectibleAddress == address(0)
+        ) revert InvalidAddress();
+        treasuryAddress = _treasuryAddress;
         hederaTokenService = IHederaTokenService(_hederaTokenService);
         usdcAddress = _usdcAddress;
+        astraNFTCollectibleAddress = _astraNFTCollectibleAddress;
         nextEscrowId = 1;
     }
 
@@ -129,20 +146,18 @@ contract Escrow is Ownable, ReentrancyGuard {
      * @dev Create an escrow from deposited funds (agent only)
      * @param shopper Address of the shopper
      * @param maker Address of the maker
-     * @param treasury Address of the treasury
      * @param creator Optional address of the creator (0x0 if none)
      * @param amount Amount to lock in escrow
      */
     function createEscrowByAgent(
         address shopper,
         address maker,
-        address treasury,
         address creator,
-        uint256 amount
+        uint256 amount,
+        uint256 nftTokenId
     ) external nonReentrant {
         if (shopper == address(0)) revert InvalidAddress();
         if (maker == address(0)) revert InvalidAddress();
-        if (treasury == address(0)) revert InvalidAddress();
         if (deposits[shopper][msg.sender] < amount) revert InsufficientBalance();
         if (amount <= 0) revert InvalidAmount();
 
@@ -151,20 +166,22 @@ contract Escrow is Ownable, ReentrancyGuard {
         
         // Create escrow
         uint256 escrowId = nextEscrowId++;
-        escrows[escrowId] = EscrowData({
+        EscrowData memory _escrowData = EscrowData({
             shopper: shopper,
             maker: maker,
             creator: creator,
-            treasury: treasury,
             agent: msg.sender,
             amount: amount,
+            nftTokenId: nftTokenId,
             milestonesCompleted: 0,
             status: STATUS_SHOPPER_DETAILS_RECEIVED,
             remainingBalance: amount,
             hasCreator: creator != address(0)
         });
+        escrows[escrowId] = _escrowData;
+        allEscrows.push(_escrowData);
         shopperEscrows[shopper].push(escrowId);
-        emit EscrowCreated(escrowId, shopper, maker, treasury, amount);
+        emit EscrowCreated(escrowId, shopper, maker, treasuryAddress, amount, nftTokenId);
     }
 
     /**
@@ -220,21 +237,46 @@ contract Escrow is Ownable, ReentrancyGuard {
             escrow.status = STATUS_OUTFIT_DELIVERED;
         } else if (escrow.milestonesCompleted == 3) {
             escrow.status = STATUS_COMPLETE;
-            
-            // Transfer remaining balance to treasury
-            if (escrow.remainingBalance > 0) {
-                int64 responseCode = hederaTokenService.transferToken(usdcAddress, address(this), escrow.treasury, safeUint256ToInt64(escrow.remainingBalance));
+            // Transfer treasury's share to treasury
+            if (escrow.remainingBalance > 0 && !escrow.hasCreator) {
+                int64 responseCode = hederaTokenService.transferToken(usdcAddress, address(this), treasuryAddress, safeUint256ToInt64(treasuryShare));
                 if (responseCode != int64(HederaResponseCodes.SUCCESS)) revert TokenTransferFailed(responseCode);
-                emit PaymentReleased(escrowId, escrow.treasury, escrow.remainingBalance);
+                emit PaymentReleased(escrowId, treasuryAddress, treasuryShare);
+            }
+            // Transfer remaining balance (dust) to treasury
+            if (escrow.remainingBalance > 0 && escrow.hasCreator) {
+                int64 responseCode = hederaTokenService.transferToken(usdcAddress, address(this), treasuryAddress, safeUint256ToInt64(escrow.remainingBalance));
+                if (responseCode != int64(HederaResponseCodes.SUCCESS)) revert TokenTransferFailed(responseCode);
+                emit PaymentReleased(escrowId, treasuryAddress, escrow.remainingBalance);
                 escrow.remainingBalance = 0;
             }
 
-            // TODO: Transfer the NFT to the shopper
+            // Transfer the NFT to the shopper
+            IAstraNFTCollectible(astraNFTCollectibleAddress).transferNFT(escrow.shopper, escrow.nftTokenId);
         } else {
             escrow.status = STATUS_INVALID;
         }
         
         emit MilestoneCompleted(escrowId, escrow.milestonesCompleted, escrow.status);
+    }
+
+    /**
+     * @dev Updates the treasury address
+     */
+    function updateTreasuryAddress(address _treasuryAddress) external onlyOwner {
+        require(_treasuryAddress != address(0), "Treasury cannot be zero address");
+        treasuryAddress = _treasuryAddress;
+        emit TreasuryUpdated(_treasuryAddress);
+    }
+
+    /**
+     * @dev Update the Astra NFT Collectible contract address
+     * @param _astraNFTCollectibleAddress The Astra NFT Collectible contract address
+     */
+    function updateAstraNFTCollectibleAddress(address _astraNFTCollectibleAddress) public onlyOwner {
+        if (_astraNFTCollectibleAddress == address(0)) revert InvalidAddress();
+        astraNFTCollectibleAddress = _astraNFTCollectibleAddress;
+        emit AstraNFTCollectibleAddressUpdated(_astraNFTCollectibleAddress);
     }
 
     /**
@@ -244,6 +286,14 @@ contract Escrow is Ownable, ReentrancyGuard {
      */
     function getEscrowBalance(uint256 escrowId) external view returns (uint256) {
         return escrows[escrowId].remainingBalance;
+    }
+    
+    /**
+     * @dev Get the full details of all escrows
+     * @return Full escrow data of all the escrows
+     */
+    function getAllEscrows() external view returns (EscrowData[] memory) {
+        return allEscrows;
     }
     
     /**
