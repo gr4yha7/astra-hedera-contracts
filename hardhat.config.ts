@@ -19,7 +19,12 @@ const config: HardhatUserConfig = {
   networks: {
     hederaTestnet: {
       url: process.env.HEDERA_RPC_URL,
-      accounts: [process.env.HEDERA_OPERATOR_PRIVATE_KEY as string],
+      accounts: [
+        process.env.HEDERA_OPERATOR_PRIVATE_KEY as string,
+        process.env.SHOPPER_PRIVATE_KEY as string,
+        process.env.MAKER_PRIVATE_KEY as string,
+        process.env.CREATOR_PRIVATE_KEY as string,
+      ],
     },
   },
 };

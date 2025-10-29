@@ -10,7 +10,10 @@
     "run:escrow": "npx hardhat run scripts/run-escrow.ts --network hederaTestnet",
     "run:nft": "npx hardhat run scripts/run-nft.ts --network hederaTestnet",
     "run:nft-collectible": "npx hardhat run scripts/run-nft-collectible.ts --network hederaTestnet",
-    "deploy:nft-collectible": "npx hardhat run scripts/deploy-nft-collectible.ts --network hederaTestnet"
+    "deploy:nft-collectible": "npx hardhat run scripts/deploy-nft-collectible.ts --network hederaTestnet",
+    "test:listing": "npx hardhat run scripts/test-listing.ts --network hederaTestnet",
+    "test:batch-listing": "npx hardhat run scripts/test-batch-listing.ts --network hederaTestnet",
+    "test:integration": "npx hardhat run scripts/integration-test.ts --network hederaTestnet"
   },
   "keywords": [],
   "author": "",

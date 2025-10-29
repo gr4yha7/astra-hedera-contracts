@@ -1,16 +1,31 @@
-import { EventLog, Log } from "ethers";
+import { EventLog, Wallet, Signer } from "ethers";
 import { ethers } from "hardhat";
 import { Escrow } from "../typechain-types";
+
+// type HardhatEthersSigner = Signer & {
+//   address: string;
+// };
 
 const MAKER_ADDRESS = "0xd06e922AACEe8d326102C3643f40507265f51369";
 const TREASURY_ADDRESS = "0x3Db2f85e7A204aB666229E637A2B9eA92e566F49"; // 0.0.7115708
 const CREATOR_ADDRESS = "0x1b6e16403b06a51C42Ba339E356a64fE67348e92"; // 0.0.7115713
+// const CREATOR_PRIVATE_KEY = 'bd83404727a183edcc32ce0c9a7e07e004b179f65a14c8aca8f106e2cc73556a';
+// const TREASURY_PRIVATE_KEY = '94c53c04a356104796be0b95ecf578fb9e4ac3dabe9367d1d5a17d0fbce9bac1';
+// const MAKER_PRIVATE_KEY = 'f8fdc66b423a3c9f66374ee9d144f0acc7ebe318fc23164f5d0e9efd6f7895dc';
+
+// const provider = new ethers.JsonRpcProvider('https://testnet.hashio.io/api');
+// const makerSigner = new ethers.Wallet(MAKER_PRIVATE_KEY, provider);
+// const treasurySigner = new ethers.Wallet(TREASURY_PRIVATE_KEY, provider);
+// const creatorSigner = new ethers.Wallet(CREATOR_PRIVATE_KEY, provider);
 
 async function main() {
   const [deployer] = await ethers.getSigners();
 
   // const Escrow = await ethers.getContractFactory("Escrow", deployer);
-  const escrowContractAddress = "0xbC04Fe4B4166Ff8A1c7081A298915EB2DC379586";
+  const escrowContractAddress = process.env.ESCROW_CONTRACT_ADDRESS;
+  if (!escrowContractAddress) {
+    throw new Error("Missing required environment variables [ESCROW_CONTRACT_ADDRESS]");
+  }
   const escrowContract = await ethers.getContractAt("Escrow", escrowContractAddress);
 
   const htsAddress = "0x0000000000000000000000000000000000000167";
@@ -63,7 +78,7 @@ async function main() {
   // console.log("Deposited by user:", receipt?.logs[0].args.user);
 
   // Create escrow
-  // const createEscrowTx = await escrowContract.createEscrowByAgent(deployer.address, MAKER_ADDRESS, TREASURY_ADDRESS, CREATOR_ADDRESS, amount);
+  // const createEscrowTx = await escrowContract.createEscrowByAgent(deployer.address, MAKER_ADDRESS, CREATOR_ADDRESS, amount);
   // const createEscrowReceipt = await createEscrowTx.wait();
   // console.log("createEscrow status: ", createEscrowReceipt?.status === 1 ? "success" : "failed");
   // const escrowId = (createEscrowReceipt?.logs[0] as EventLog).args.escrowId;

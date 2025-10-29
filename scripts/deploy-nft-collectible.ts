@@ -2,8 +2,6 @@ import { ethers, upgrades } from "hardhat";
 
 const HEDERA_TOKEN_SERVICE_ADDRESS = "0x0000000000000000000000000000000000000167";
 const USDC_TOKEN_EVM_ADDRESS = "0x0000000000000000000000000000000000068cda";
-const TREASURY_ADDRESS = "0x3Db2f85e7A204aB666229E637A2B9eA92e566F49";
-// const ESCROW_ADDRESS = "0x";
 const BASE_MINT_FEE = ethers.parseUnits("0.1", 6);
 
 async function main() {
@@ -18,8 +16,7 @@ async function main() {
     deployer.address,
     HEDERA_TOKEN_SERVICE_ADDRESS,
     USDC_TOKEN_EVM_ADDRESS,
-    TREASURY_ADDRESS,
-    // ESCROW_ADDRESS,
+    deployer.address,
     BASE_MINT_FEE,
   ], {
     initializer: "initialize",
@@ -35,6 +32,8 @@ async function main() {
   // Get the implementation address
   const implementationAddress = await upgrades.erc1967.getImplementationAddress(astraNFTCollectibleAddress);
   console.log("AstraNFTCollectible implementation deployed to:", implementationAddress);
+
+  return astraNFTCollectibleAddress;
 }
 
 main()
