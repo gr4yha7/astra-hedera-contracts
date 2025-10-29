@@ -65,7 +65,7 @@ contract AstraNFTCollectible is
     // Maximum number of users to track per design
     uint256 public constant MAX_USERS_PER_DESIGN = 100;
 
-    uint256 public constant MAX_SUPPLY = 100;
+    // uint256 public constant MAX_SUPPLY = 100;
     uint256 public constant MAX_PER_MINT = 10;
 
     address public treasuryAddress;
@@ -232,9 +232,9 @@ contract AstraNFTCollectible is
       string memory prompt,
       uint256 _count
     ) public {
-        uint totalMinted = _tokenIdCounter.current();
+        // uint totalMinted = _tokenIdCounter.current();
 
-        require(totalMinted + _count <= MAX_SUPPLY, "Not enough NFTs left!");
+        // require(totalMinted + _count <= MAX_SUPPLY, "Not enough NFTs left!");
         require(_count > 0 && _count <= MAX_PER_MINT, "Cannot mint specified number of NFTs.");
         // Uniqueness check for designId
         require(!_usedDesignIds[designId], "Design ID already in use");

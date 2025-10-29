@@ -5,8 +5,8 @@ This document describes the recent changes made to the Astra Hedera Contracts co
 
 ## New Contract Addresses
 ```solidity
-ASTRA_NFT_COLLECTIBLE_CONTRACT_ADDRESS=0x4Cd24f8C1cb08EC258CB73B4F37AE535561D382A
-ESCROW_CONTRACT_ADDRESS=0x807493Ff04F26902EA8C438D63d7f10e43da3e48
+ASTRA_NFT_COLLECTIBLE_CONTRACT_ADDRESS=0x3da9616d78B6154D26B682e6F1e57aeaCDf2f3c1
+ESCROW_CONTRACT_ADDRESS=0x2679b381f17371982b126f93026Ea8a9b50120f7
 ```
 
 ## Function Signature Changes (Before vs After Comparison)
@@ -16,6 +16,7 @@ ESCROW_CONTRACT_ADDRESS=0x807493Ff04F26902EA8C438D63d7f10e43da3e48
 #### **REMOVED Functions:**
 - `updateFabricType(uint256 tokenId, string memory newFabricType)`
 - `getFabricType(uint256 tokenId)`
+- `MAX_SUPPLY()`
 
 #### **NFTMetadata Struct:**
 ```solidity
