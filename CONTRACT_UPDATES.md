@@ -23,7 +23,7 @@ ESCROW_CONTRACT_ADDRESS=0x807493Ff04F26902EA8C438D63d7f10e43da3e48
 struct NFTMetadata {
     string designId;
     string designName;
-    string fabricType;
+    string fabricType;    // REMOVED
     string designImage;
     string prompt;
     address[] previousOwners;
@@ -34,7 +34,6 @@ struct NFTMetadata {
 struct NFTMetadata {
     string designId;
     string designName;
-    string fabricType;    // REMOVED
     string designImage;
     string prompt;
     address[] previousOwners;
