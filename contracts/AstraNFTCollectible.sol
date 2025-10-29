@@ -122,12 +122,12 @@ contract AstraNFTCollectible is
         address indexed seller
     );
 
-    event NFTSold(
-        uint256 indexed tokenId,
-        address indexed seller,
-        address indexed buyer,
-        uint256 price
-    );
+    // event NFTSold(
+    //     uint256 indexed tokenId,
+    //     address indexed seller,
+    //     address indexed buyer,
+    //     uint256 price
+    // );
     
     // Event for contract upgrades
     event ContractUpgraded(address indexed implementation);

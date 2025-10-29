@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
-
-
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
@@ -15,7 +13,6 @@ import {IAstraNFTCollectible} from "./IAstraNFTCollectible.sol";
  * @dev Handles milestone-based payments for work between shoppers, makers, and agents
  */
 contract Escrow is Ownable, ReentrancyGuard {
-    
     // Constants
     uint8 private constant TOTAL_MILESTONES = 3;
     uint8 private constant TREASURY_PERCENTAGE = 10;
